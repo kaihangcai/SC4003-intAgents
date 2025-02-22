@@ -14,7 +14,7 @@ def get_p1_maze():
         [' ', ' ', ' ', ' ', ' ', ' '],
     ]
 
-def generate_maze(width, height, wall_prob=0.2):
+def generate_maze(width, height, start_pos, wall_prob=0.2):
     """Generate a random maze grid with walls, white, green, and brown cells."""
     grid = []
     for _ in range(height):
@@ -27,9 +27,8 @@ def generate_maze(width, height, wall_prob=0.2):
             row.append(cell_type)
         grid.append(row)
     
-    # Ensure the start and end positions are not walls
-    grid[0][0] = MazeCell.WHITE.value
-    grid[height - 1][width - 1] = MazeCell.GREEN.value
+    # start position should be white
+    grid[start_pos] = MazeCell.WHITE.value
     return grid
 
 
@@ -41,9 +40,6 @@ def step_by_step_run():
      # Initialize maze and agent
     maze = Maze(mazeGrid, start_pos)
     agent = MazeAgent(maze=maze)
-
-    maze.print_grid(start_pos)
-    maze.print_grid_rewards(start_pos)
 
     cur_state = start_pos
     agent_move = ""
@@ -74,56 +70,35 @@ def step_by_step_run():
             agent.print_u_table()
 
 def part_one():
-    maze = get_p1_maze()
-    start_pos = (2, 3)
+    mazeGrid = get_p1_maze()
+    start_pos = (3, 2)
+    # start_pos = (2, 3)
 
      # Initialize maze and agent
-    maze = Maze(maze, start_pos)
-    agent = MazeAgent(state_size=maze.height * maze.width, action_size=len(Move))
+    maze = Maze(mazeGrid, start_pos)
+    agent = MazeAgent(maze=maze)
 
-    num_episodes = 1  # Number of episodes to train
     max_steps = 100  # Maximum steps per episode
 
-    for episode in range(num_episodes):
-        cur_state = maze.start_pos
-        for step in range(max_steps):
-            print_grid(maze, cur_state)
+    agent.update_utilities(steps=max_steps)
 
-            action = agent.choose_action(cur_state)  # Choose an action
-            print(f"Chosen action: {Move(action)}")
-
-            next_state, reward = agent.transition(cur_state, Move(action), maze)  # Apply transition
-            agent.update_q_value(cur_state, action, reward, next_state)  # Update Q-table
-            
-            cur_state = next_state  # Move to the next state
-
-            if step == max_steps - 1:  # End of episode
-                break
-        
-        agent.decay_exploration()  # Reduce exploration over time
-
-    # Display the learned policy
-    print("\nLearned Policy:")
-    for y in range(maze.height):
-        for x in range(maze.width):
-            state = (x, y)
-            if maze.grid[y][x] == MazeCell.WALL.value:
-                print(" W ", end="")
-            else:
-                best_action = Move(np.argmax(agent.q_table[state]))
-                print(f" {best_action.name[0]} ", end="")
-        print()
+    agent.print_u_table()
+    agent.print_optimal_actions()
 
 def main():
-    step_by_step_run()
-    # mazeGrid = get_p1_maze()
-    # start_pos = (3, 2)
+    try:
+        print("1. Step by step")
+        print("2. Value iteration")
+        # print("3. Policy iteration")
+        choice = int(input("Choice: "))
 
-    #  # Initialize maze and agent
-    # maze = Maze(mazeGrid, start_pos)
-    # agent = MazeAgent(maze=maze)
+        if(choice == 1):
+            step_by_step_run()
+        elif(choice == 2):
+            part_one()
 
-    # maze.print_grid(start_pos)
+    except:
+        print("Invalid option! Exiting...")
 
 
 if __name__ == "__main__":

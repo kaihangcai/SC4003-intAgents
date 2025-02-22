@@ -1,11 +1,16 @@
 import numpy as np
-import random
 import sys
 
 from helper import Move
 
 class MazeAgent:
-    def __init__(self, maze, discount_factor=0.99, epsilion=0.001):
+    def __init__(self, maze, discount_factor=0.99, epsilion=0.01):
+        """
+            discount_factor: Gamma value to reduce the "importance" of future state utilities
+            epsilion: Threshold to check for convergence
+
+            Note: Agent is set up to (hopefully correctly) use Value Iteration
+        """
         self.maze = maze
         self.discount_factor = discount_factor  # Discount factor (gamma)
 
@@ -30,9 +35,7 @@ class MazeAgent:
                         continue
 
                     max_util, _ = self.get_max_expected_utility(state)
-                    # print(f"Max util: {max_util}")
                     R_s = self.maze.get_reward(state)
-                    # print(f"Cell ({state}): {R_s}")
                     new_util = R_s + self.discount_factor * max_util # update util table
 
                     if(has_converged):  # update convergence check
@@ -41,7 +44,7 @@ class MazeAgent:
                     self.u_table[state] = new_util
 
             if(has_converged):  # terminate early if convergence achieved
-                print("Early termination!")
+                print(f"Early termination in step {i}!")
                 break
 
 
@@ -126,3 +129,28 @@ class MazeAgent:
                     print(f"{i}  ", end="")     # print row index
                 print(f" {row[j]} ", end="")
             print()
+        print()
+
+    def print_optimal_actions(self):
+        """Prints the optimal action (policy) for the environment"""
+        for rowIdx in range(self.maze.height):
+            column_headers = [idx for idx in range(len(self.maze.grid[rowIdx]))]
+            if(rowIdx == 0): # print col index
+                print("   ", end="")
+                for header in column_headers:
+                    print(f" {header} ", end="")
+                print()
+
+            for colIdx in range(self.maze.width):
+                if(colIdx == 0):
+                    print(f"{rowIdx}  ", end="")     # print row index
+
+                state = (rowIdx, colIdx)
+                _, best_move = self.get_max_expected_utility(state)
+
+                if(self.maze.is_wall(state)):
+                    best_move = "Wall"
+
+                print(f" {best_move} ", end="")
+            print()
+        print()
