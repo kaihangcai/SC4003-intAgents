@@ -1,14 +1,16 @@
 from helper import MazeCell, Move
 
 class Maze:
-    def __init__(self, grid, start_pos):
-        """Initialize the maze with a grid representation."""
+    def __init__(self, grid):
+        """
+        Initialize the maze with a grid representation.
+        
+        Params:
+            grid: 2d array of distinct strings representing the grid environment
+        """
         self.grid = grid  # 2D list representing the maze layout
         self.height = len(grid)
         self.width = len(grid[0])
-
-        self.start_pos = start_pos
-
     
     def is_wall(self, position):
         """Check if a given state is a wall."""
@@ -21,6 +23,14 @@ class Maze:
         is_oob = not (rowIdx >= 0 and rowIdx < self.height and colIdx >= 0 and colIdx < self.width)
         return is_oob
     
+    def is_reward(self, position):
+        rowIdx, colIdx = position
+        return self.grid[rowIdx][colIdx] == MazeCell.GREEN.value
+    
+    def is_punishment(self, position):
+        rowIdx, colIdx = position
+        return self.grid[rowIdx][colIdx] == MazeCell.BROWN.value
+
     def get_reward(self, position):
         """Get the reward for a given state."""
         rowIdx, colIdx = position
