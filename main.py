@@ -1,8 +1,10 @@
 import random
 import numpy as np
+
 from helper import MazeCell, Move
 from maze import Maze
 from agent import MazeAgent
+from alt_agent import AltAgent
 
 def get_p1_maze():
     """
@@ -45,7 +47,8 @@ def step_by_step_run():
 
      # Initialize maze and agent
     maze = Maze(mazeGrid)
-    agent = MazeAgent(maze=maze)
+    agent = AltAgent(maze=maze)
+    # agent = MazeAgent(maze=maze)
 
     cur_state = start_pos
     agent_move = ""
@@ -119,10 +122,14 @@ def custom():
 
      # Initialize maze and agent
     maze = Maze(mazeGrid)
-    agent = MazeAgent(maze=maze)
+    agent = AltAgent(maze=maze)
 
     print("Print policy!")
-    agent.value_iteration(1)
+    agent.value_iteration(1000)
+
+    agent.print_u_table()
+    agent.print_policy()
+
 
 def main():
     try:

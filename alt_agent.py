@@ -3,8 +3,8 @@ import sys
 
 from helper import Move
 
-class MazeAgent:
-    def __init__(self, maze, discount_factor=0.99, threshold=0.01):
+class AltAgent:
+    def __init__(self, maze, discount_factor=0.99, threshold=0.0001):
         """
         Initializes the agent to have knowledge of the maze + relevant hyperparams
         
@@ -18,8 +18,11 @@ class MazeAgent:
 
         self.threshold = threshold
         
-        self.u_table = np.zeros((maze.height, maze.width))
+        self.u_table = np.zeros((maze.height, maze.width))  # stores utility values
+        self.u_prime_table = np.zeros((maze.height, maze.width))    # stores updated utility values, then updates u_table at the end of a loop
+
         self.init_policy()
+        self.init_u_prime_table()
 
     def init_policy(self):
         """
@@ -39,6 +42,35 @@ class MazeAgent:
                     policy_row.append(Move(0))
             self.policy.append(policy_row)
 
+    def init_u_prime_table(self):
+        """
+        Initializes utility values of reward/punish states based on reward values
+          - Basically the u_table is initialized to show the R(s) values for each state
+        """
+        for rowIdx in range(self.maze.height):
+            for colIdx in range(self.maze.width):
+                state = (rowIdx, colIdx)
+                if(self.maze.is_wall(state)):
+                    self.u_prime_table[state] = 0
+                else:
+                    self.u_prime_table[state] = self.maze.get_reward(state)
+
+    def calculate_policy(self):
+        """
+        Calculates the new optimal policy based on the calculated utilities 
+        """
+        for rowIdx in range(self.maze.height):
+            for colIdx in range(self.maze.width):
+                state = (rowIdx, colIdx)
+
+                # no calc needed for these cells
+                if(self.maze.is_wall(state) or self.maze.is_reward(state) or self.maze.is_punishment(state)):
+                    continue
+
+                self.policy[rowIdx][colIdx] = Move(np.argmax([self.get_expected_utility(state, Move(i)) for i in range(len(Move))]))
+                    
+
+
     def policy_iteration(self, min_steps=1):
         """
         Performs Policy Iteration to update u_table and policy accordingly
@@ -46,12 +78,10 @@ class MazeAgent:
         Params:
             min_steps: int, controls the number of policy iterations
         """
-        print("Policy iteration!")
-
         iteration = 0
         while(True):
+            policy_stable = True
             # Policy evaluation
-            delta = 0   # to track the max difference in updated values
             for rowIdx in range(self.maze.height):
                 for colIdx in range(self.maze.width):
                     state = (rowIdx, colIdx)
@@ -81,6 +111,11 @@ class MazeAgent:
                         policy_stable = False
 
             iteration += 1
+
+            if(policy_stable):
+                print("Policy Iteration converged!")
+                break
+
             if(iteration == min_steps):
                 if policy_stable:
                     print("Policy Iteration converged!")
@@ -100,6 +135,7 @@ class MazeAgent:
         iteration = 0
         while(True):
             delta = 0   # to track the max difference in updated values
+            self.u_table = self.u_prime_table.copy()    # assign u_table as a copy of u_prime_table
 
             # for each state s in S,
             for rowIdx in range(self.maze.height):
@@ -110,53 +146,37 @@ class MazeAgent:
                     if(self.maze.is_wall(state) or self.maze.is_reward(state) or self.maze.is_punishment(state)):
                         continue
 
-                    cur_util = self.u_table[state]
+                    # update U' table with new utility value
+                    self.u_prime_table[state] = self.get_max_expected_utility(state)
+                    delta = max(delta, abs(self.u_prime_table[state] - self.u_table[state]))
 
-                    max_util, best_move, _ = self.get_max_expected_utility(state)
-                    self.u_table[state] = max_util
-
-                    self.policy[rowIdx][colIdx] = best_move     # update policy
-                    delta = max(delta, abs(cur_util - max_util))
             iteration += 1
+            if(delta < self.threshold * (1 - self.discount_factor) / self.discount_factor):
+                print("Value iteration converged!")
+                break
+
             if(iteration == min_steps):
                 if delta <= self.threshold:
-                    print("Value iteration converged!")
+                    print("Delta is under threshold!")
                 else:
                     print("Value iteration did not converge!")
                 break
+        self.calculate_policy()
 
     def get_max_expected_utility(self, state):
         """
             Finds max. expected utility and the corresponding optimal move for a given state (goes through all possible actions)
 
             Params:
-                state: Tuple[int, int] indicating the position
+                state: Tuple[int, int] indicating the position (a.k.a state)
 
             Returns:
-                max_util: Max. possible utility (float)
-                best_move: Move.[UP/DOWN/LEFT/RIGHT]
-                new_optimal_move: boolean (whether or not a new move is selected)
+                max_exp_util: Max. expected utility (float)
         """
-        cur_move = self.policy[state[0]][state[1]]      # get the existing policy
-        best_move = None
-
-        max_util = sys.float_info.min
-
-        for i in range(len(Move)):
-            util = self.get_expected_utility(state, Move(i))
-
-            if(util > max_util):
-                max_util = util
-                best_move = Move(i)
-
-        new_optimal_move = False    # tracks whether a new move has been selected or not
-        if best_move != None and best_move != cur_move:
-            new_optimal_move = True
+        max_exp_util = max([self.get_expected_utility(state, Move(i)) for i in range(len(Move))])
         
-        if best_move == None:
-            best_move = cur_move
-
-        return max_util, best_move, new_optimal_move
+        # R(s) + y * max(EU(s') for all s')
+        return self.maze.get_reward(state) + self.discount_factor * max_exp_util
             
     def get_expected_utility(self, state, action):
         """
@@ -166,8 +186,6 @@ class MazeAgent:
             state: Tuple[int, int] representing CURRENT state
             action: Move() representing the policy(state) value
         """
-
-        print("Get expected utility!")
         probabilities = [0.8, 0.1, 0.1]
         util = 0
 
@@ -177,7 +195,7 @@ class MazeAgent:
         # calculate the utility for this particular chosen action
         for j in range(len(actions)):
             next_state = self.get_next_state(state, actions[j])  
-            util += probabilities[j] * (self.maze.get_reward(next_state) + self.discount_factor * self.u_table[next_state])
+            util += probabilities[j] * self.u_table[next_state]
 
         return util
     
@@ -247,6 +265,8 @@ class MazeAgent:
         """
         Helper function to print the optimal action (policy) so far
         """
+        self.calculate_policy()
+
         for rowIdx in range(self.maze.height):
             column_headers = [idx for idx in range(len(self.maze.grid[rowIdx]))]
             if(rowIdx == 0): # print col index
