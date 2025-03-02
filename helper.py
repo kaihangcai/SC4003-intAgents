@@ -10,4 +10,4 @@ class MazeCell(Enum):
     FLOOR = ' '
     WALL = 'W'
     GREEN = 'G'     # +1
-    BROWN = 'B'     # -1
+    ORANGE = 'O'     # -1

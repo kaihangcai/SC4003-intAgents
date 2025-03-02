@@ -3,7 +3,13 @@ import sys
 
 from helper import Move
 
-class MazeAgent:
+class ValueAgent:
+    """
+    !!! NOT IN USE !!!
+
+    Implements Value and Policy Iteration by calculating state values V(s) and the Q table Q(s, a), taught in SC3000
+      - Achieves more or less the same end result as the Utility function in SC4003, but the calculation is quite different even though they do look fairly similar
+    """
     def __init__(self, maze, discount_factor=0.99, threshold=0.01):
         """
         Initializes the agent to have knowledge of the maze + relevant hyperparams

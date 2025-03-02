@@ -1,9 +1,8 @@
 import numpy as np
-import sys
 
 from helper import Move
 
-class AltAgent:
+class UtilityAgent:
     def __init__(self, maze, discount_factor=0.99, threshold=0.0001):
         """
         Initializes the agent to have knowledge of the maze + relevant hyperparams
@@ -71,17 +70,25 @@ class AltAgent:
                     
 
 
-    def policy_iteration(self, min_steps=1):
+    def policy_iteration(self, max_steps=1):
         """
         Performs Policy Iteration to update u_table and policy accordingly
+          - Policy is updated on each loop (if necessary) and the loop terminates when there are no updates left to make
 
         Params:
-            min_steps: int, controls the number of policy iterations
+            max_steps: int, controls the maximum number of policy iterations
+
+        Returns:
+            utilities: ndarray of utility values calculated over each iteration (last entry would just be the final utility values)
+            policy: the resulting optimal policies for each grid cell
         """
+        utilities = []
         iteration = 0
         while(True):
-            policy_stable = True
-            # Policy evaluation
+            utilities.append(np.copy(self.u_table))
+            self.u_table = self.u_prime_table.copy()    # assign u_table as a copy of u_prime_table
+
+            # Policy evaluation (using cur policy, eval utilities)
             for rowIdx in range(self.maze.height):
                 for colIdx in range(self.maze.width):
                     state = (rowIdx, colIdx)
@@ -90,11 +97,8 @@ class AltAgent:
                     if(self.maze.is_wall(state) or self.maze.is_reward(state) or self.maze.is_punishment(state)):
                         continue
 
-                    cur_util = self.u_table[state]
-                    action = self.policy[state[0]][state[1]]
-
-                    util = self.get_expected_utility(state, action)
-                    self.u_table[state] = util
+                    action = self.policy[rowIdx][colIdx]
+                    self.u_prime_table[state] = self.maze.get_reward(state) + self.discount_factor * self.get_expected_utility(state, action)
 
             # Policy improvement
             policy_stable = True
@@ -104,37 +108,44 @@ class AltAgent:
                     if(self.maze.is_wall(state) or self.maze.is_reward(state) or self.maze.is_punishment(state)):
                         continue
 
-                    _, best_move, has_updated = self.get_max_expected_utility(state)
+                    cur_move: Move = self.policy[rowIdx][colIdx]
+                    best_move = Move(np.argmax([self.get_expected_utility(state, Move(i)) for i in range(len(Move))]))
 
-                    if has_updated:     # a new move has been found to be more optimal
+                    if cur_move != best_move:     # a new move has been found to be more optimal
                         self.policy[rowIdx][colIdx] = best_move
                         policy_stable = False
 
             iteration += 1
 
             if(policy_stable):
-                print("Policy Iteration converged!")
+                print(f"Policy Iteration converged after {iteration} loops!")
                 break
 
-            if(iteration == min_steps):
-                if policy_stable:
-                    print("Policy Iteration converged!")
-                else:
-                    print("Policy Iteration did not converge!")
+            if(iteration == max_steps):
+                print(f"Policy Iteration did not converge! Terminating after {iteration} loops!")
                 break
+        
+        utilities = np.stack(utilities, axis=0)
 
-    def value_iteration(self, min_steps=1):
+        return utilities, self.policy
+
+    def value_iteration(self, max_steps=1):
         """
         Performs Value Iteration to update u_table and policy accordingly
-
+          - Policy is updated AFTER the VI step when convergence has been attained
+        
         Params:
-            min_steps: int, controls the number of value iterations
-        """
-        print("Value iteration!")
+            max_steps: int, controls the maximum number of value iterations
 
+        Returns:
+            utilities: ndarray of utility values calculated over each iteration (last entry would just be the final utility values)
+            policy: the resulting optimal policies for each grid cell
+        """
+        utilities = []
         iteration = 0
         while(True):
             delta = 0   # to track the max difference in updated values
+            utilities.append(np.copy(self.u_prime_table))
             self.u_table = self.u_prime_table.copy()    # assign u_table as a copy of u_prime_table
 
             # for each state s in S,
@@ -151,17 +162,21 @@ class AltAgent:
                     delta = max(delta, abs(self.u_prime_table[state] - self.u_table[state]))
 
             iteration += 1
+
             if(delta < self.threshold * (1 - self.discount_factor) / self.discount_factor):
-                print("Value iteration converged!")
+                print(f"Value iteration converged after {iteration} loops!")
                 break
 
-            if(iteration == min_steps):
-                if delta <= self.threshold:
-                    print("Delta is under threshold!")
-                else:
-                    print("Value iteration did not converge!")
+            if(iteration == max_steps):
+                print(f"Value Iteration did not converge! Terminating after {iteration} loops!")
                 break
+
+        utilities = np.stack(utilities, axis=0)
+
+        # calculate actual policy using new utilities
         self.calculate_policy()
+
+        return utilities, self.policy
 
     def get_max_expected_utility(self, state):
         """

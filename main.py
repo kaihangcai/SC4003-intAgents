@@ -3,8 +3,9 @@ import numpy as np
 
 from helper import MazeCell, Move
 from maze import Maze
-from agent import MazeAgent
-from alt_agent import AltAgent
+# from val_agent import ValueAgent
+from util_agent import UtilityAgent
+from grid_plotter import GridPlotter
 
 def get_p1_maze():
     """
@@ -13,10 +14,10 @@ def get_p1_maze():
 
     return [
         ['G', 'W', 'G', ' ', ' ', 'G'],
-        [' ', 'B', ' ', 'G', 'W', 'B'],
-        [' ', ' ', 'B', ' ', 'G', ' '],
-        [' ', ' ', ' ', 'B', ' ', 'G'],
-        [' ', 'W', 'W', 'W', 'B', ' '],
+        [' ', 'O', ' ', 'G', 'W', 'O'],
+        [' ', ' ', 'O', ' ', 'G', ' '],
+        [' ', ' ', ' ', 'O', ' ', 'G'],
+        [' ', 'W', 'W', 'W', 'O', ' '],
         [' ', ' ', ' ', ' ', ' ', ' '],
     ]
 
@@ -27,14 +28,14 @@ def generate_maze(width, height, start_pos, wall_prob=0.2):
         row = []
         for _ in range(width):
             cell_type = random.choices(
-                [MazeCell.WALL.value, MazeCell.WHITE.value, MazeCell.GREEN.value, MazeCell.BROWN.value],
+                [MazeCell.WALL.value, MazeCell.FLOOR.value, MazeCell.GREEN.value, MazeCell.ORANGE.value],
                 weights=[wall_prob, 0.6, 0.1, 0.1]
             )[0]
             row.append(cell_type)
         grid.append(row)
     
     # start position should be white
-    grid[start_pos] = MazeCell.WHITE.value
+    grid[start_pos] = MazeCell.FLOOR.value
     return grid
 
 
@@ -47,8 +48,8 @@ def step_by_step_run():
 
      # Initialize maze and agent
     maze = Maze(mazeGrid)
-    agent = AltAgent(maze=maze)
-    # agent = MazeAgent(maze=maze)
+    agent = UtilityAgent(maze=maze)
+    # agent = ValueAgent(maze=maze)
 
     cur_state = start_pos
     agent_move = ""
@@ -77,7 +78,7 @@ def step_by_step_run():
         elif(agent_move < 2*len(Move)):
             cur_state = agent.get_next_state(cur_state, Move(agent_move % len(Move)))
         elif(agent_move == 2*len(Move)):
-            iter_type = input("Value iteration(VI) or Policy iteration (PI)?")
+            iter_type = input("Value iteration(VI) or Policy iteration (PI)? ")
             if(iter_type.lower() == 'vi'):
                 agent.value_iteration()     # default min_step is 1 so it will just perform 1 run of the update
             else:
@@ -88,50 +89,96 @@ def step_by_step_run():
 
 def part_one_vi():
     mazeGrid = get_p1_maze()
-    start_pos = (3, 2)
 
      # Initialize maze and agent
     maze = Maze(mazeGrid)
-    agent = MazeAgent(maze=maze)
+    # agent = ValueAgent(maze=maze)
+    agent = UtilityAgent(maze=maze)
 
-    max_steps = 100  # Maximum steps per episode
+    max_steps = 1000  # Maximum steps per episode
 
-    agent.value_iteration(max_steps)
+    utilities, policy = agent.value_iteration(max_steps)
 
     agent.print_u_table()
     agent.print_policy()
+
+    plotter = GridPlotter(utilities=utilities, policy=policy)
+    while(True):
+        try:
+            print("=== Plot options ===\n  1. Plot optimal policies\n  2. Plot utilities\n  3. Plot utility estimates\n  4. Plot utility estimates by row")
+            
+            choice = int(input("Plot action: "))
+            if(choice == 1):
+                plotter.plot_optimal_policy(maze=maze)
+            elif(choice == 2):
+                plotter.plot_utility_graph(maze=maze)
+            elif(choice == 3):
+                plotter.plot_utility_estimates(maze=maze)
+            elif(choice == 4):
+                plotter.plot_utility_estimates_separate(maze=maze)
+            else:
+                break
+        except:         # non int input string
+            print("Exiting!")
+            break
 
 def part_one_pi():
     mazeGrid = get_p1_maze()
-    start_pos = (3, 2)
 
      # Initialize maze and agent
     maze = Maze(mazeGrid)
-    agent = MazeAgent(maze=maze)
+    # agent = ValueAgent(maze=maze)
+    agent = UtilityAgent(maze=maze)
 
-    max_steps = 100  # Maximum steps per episode
+    max_steps = 1000  # Maximum steps per episode
 
-    agent.policy_iteration(max_steps)
-
+    utilities, policy = agent.policy_iteration(max_steps)
     agent.print_u_table()
     agent.print_policy()
+
+    plotter = GridPlotter(utilities=utilities, policy=policy)
+
+    while(True):
+        try:
+            print("=== Plot options ===\n  1. Plot optimal policies\n  2. Plot utilities\n  3. Plot utility estimates\n  4. Plot utility estimates by row")
+            
+            choice = int(input("Plot action: "))
+            if(choice == 1):
+                plotter.plot_optimal_policy(maze=maze)
+            elif(choice == 2):
+                plotter.plot_utility_graph(maze=maze)
+            elif(choice == 3):
+                plotter.plot_utility_estimates(maze=maze)
+            elif(choice == 4):
+                plotter.plot_utility_estimates_separate(maze=maze)
+            else:
+                break
+        except:         # non int input string
+            print("Exiting!")
+            break
+
 
 def custom():
     mazeGrid = get_p1_maze()
-    start_pos = (3, 2)
 
      # Initialize maze and agent
     maze = Maze(mazeGrid)
-    agent = AltAgent(maze=maze)
+    # agent = ValueAgent(maze=maze)
+    agent = UtilityAgent(maze=maze)
 
-    print("Print policy!")
-    agent.value_iteration(1000)
+    max_steps = 1000  # Maximum steps per episode
 
+    utilities, policy = agent.policy_iteration(max_steps)
     agent.print_u_table()
     agent.print_policy()
 
+    plotter = GridPlotter(utilities=utilities, policy=policy)
+    plotter.plot_utility_estimates(maze=maze)
+
 
 def main():
+    # custom()
+
     try:
         print("1. Step by step (DEBUG)")
         print("2. Value iteration")

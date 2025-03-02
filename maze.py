@@ -1,4 +1,4 @@
-from helper import MazeCell, Move
+from helper import MazeCell
 
 class Maze:
     def __init__(self, grid):
@@ -29,7 +29,7 @@ class Maze:
     
     def is_punishment(self, position):
         rowIdx, colIdx = position
-        return self.grid[rowIdx][colIdx] == MazeCell.BROWN.value
+        return self.grid[rowIdx][colIdx] == MazeCell.ORANGE.value
 
     def get_reward(self, position):
         """Get the reward for a given state."""
@@ -37,7 +37,7 @@ class Maze:
         cell = self.grid[rowIdx][colIdx]
         if cell == MazeCell.GREEN.value:  # Green square
             return 1
-        elif cell == MazeCell.BROWN.value:  # Brown square
+        elif cell == MazeCell.ORANGE.value:  # Orange square
             return -1
         else:  # White square
             return -0.05
