@@ -4,14 +4,15 @@ import numpy as np
 from helper import MazeCell, Move
 
 class GridPlotter:
-    def __init__(self, utilities, policy):
+    def __init__(self, utilities, policy, save_path="plots/PartTwo"):
         """
         Initializes the plotter with the agent object
         """
         self.utilities = utilities
         self.policy = policy
+        self.save_path = save_path
 
-    def plot_utility_graph(self, maze):
+    def plot_utility_graph(self, maze, save_filename, show_plot):
         """
         Plots the grid world with the calculated utilities displayed on the white cells
         """
@@ -19,9 +20,9 @@ class GridPlotter:
         cell_text = self.get_utility_dict(maze)
         cell_colors = self.get_color_dict(maze)
 
-        self.plot_gridworld(rows=maze.height, cols=maze.width, cell_colors=cell_colors, cell_text=cell_text)
+        self.plot_gridworld(rows=maze.height, cols=maze.width, save_filename=save_filename, show_plot=show_plot, cell_colors=cell_colors, cell_text=cell_text)
 
-    def plot_optimal_policy(self, maze):
+    def plot_optimal_policy(self, maze, save_filename, show_plot):
         """
         Plots the grid world with the optimal policies displayed on the white cells
         """
@@ -30,7 +31,7 @@ class GridPlotter:
         cell_policy = self.get_policy_dict(maze)
         cell_colors = self.get_color_dict(maze)
 
-        self.plot_gridworld(rows=maze.height, cols=maze.width, cell_colors=cell_colors, cell_text=cell_text, cell_actions=cell_policy)
+        self.plot_gridworld(rows=maze.height, cols=maze.width, save_filename=save_filename, show_plot=show_plot, cell_colors=cell_colors, cell_text=cell_text, cell_actions=cell_policy)
 
     def get_policy_dict(self, maze):
         """
@@ -122,7 +123,7 @@ class GridPlotter:
 
         return cell_text
 
-    def plot_gridworld(self, rows, cols, cell_colors=None, cell_text=None, cell_actions=None):
+    def plot_gridworld(self, rows, cols, save_filename, show_plot, cell_colors=None, cell_text=None, cell_actions=None):
         """
         Plots the Gridworld environment as specified by grid
         
@@ -177,9 +178,11 @@ class GridPlotter:
         ax.grid(True, color='black')
         ax.set_frame_on(False)
         
-        plt.show()
+        plt.savefig(f"{self.save_path}/{save_filename}")
+        if(show_plot):
+            plt.show()
 
-    def plot_utility_estimates_separate(self, maze):
+    def plot_utility_estimates_separate(self, maze, save_filename="new_plot", show_plot=True):
         """
         Plots the graph of the utility for each cell over each iteration
         """
@@ -220,9 +223,11 @@ class GridPlotter:
             ax[y][x].set_xlabel("Number of iterations")
             ax[y][x].set_ylabel("Utility estimates")
 
-        plt.show()
+        plt.savefig(f"{self.save_path}/{save_filename}")
+        if(show_plot):
+            plt.show()
 
-    def plot_utility_estimates(self, maze):
+    def plot_utility_estimates(self, maze, save_filename="new_plot", show_plot=True):
         """
         Plots the graph of the utility for each cell over each iteration
         """
@@ -267,4 +272,9 @@ class GridPlotter:
 
         plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1))  # Keeps legend outside the main plot
         plt.grid(True)
-        plt.show()
+
+        plt.savefig(f"{self.save_path}/{save_filename}")
+        if(show_plot):
+            plt.show()
+
+
