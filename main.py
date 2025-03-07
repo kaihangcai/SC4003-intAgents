@@ -95,25 +95,25 @@ def run_vi(mazeGrid):
 
     max_steps = 1000  # Maximum steps per episode
 
-    utilities, policy = agent.value_iteration(max_steps)
+    utilities, policy, _ = agent.value_iteration(max_steps)
 
     agent.print_u_table()
     agent.print_policy()
 
-    plotter = GridPlotter(utilities=utilities, policy=policy)
+    plotter = GridPlotter(utilities=utilities, policy=policy, save_path="plots/PartOne")
     while(True):
         try:
             print("=== Plot options ===\n  1. Plot optimal policies\n  2. Plot utilities\n  3. Plot utility estimates\n  4. Plot utility estimates by row")
             
             choice = int(input("Plot action: "))
             if(choice == 1):
-                plotter.plot_optimal_policy(maze=maze)
+                plotter.plot_optimal_policy(maze=maze, save_filename="VI_policy", show_plot=False)
             elif(choice == 2):
-                plotter.plot_utility_graph(maze=maze)
+                plotter.plot_utility_graph(maze=maze, save_filename="VI_utility", show_plot=False)
             elif(choice == 3):
-                plotter.plot_utility_estimates(maze=maze)
+                plotter.plot_utility_estimates(maze=maze, save_filename="VI_utility_estimates", show_plot=False)
             elif(choice == 4):
-                plotter.plot_utility_estimates_separate(maze=maze)
+                plotter.plot_utility_estimates_separate(maze=maze, save_filename="VI_utility_estimates_by_row", show_plot=False)
             else:
                 break
         except:         # non int input string
@@ -128,11 +128,11 @@ def run_pi(mazeGrid):
 
     max_steps = 1000  # Maximum steps per episode
 
-    utilities, policy = agent.policy_iteration(max_steps)
+    utilities, policy, _ = agent.policy_iteration(max_steps)
     agent.print_u_table()
     agent.print_policy()
 
-    plotter = GridPlotter(utilities=utilities, policy=policy)
+    plotter = GridPlotter(utilities=utilities, policy=policy, save_path="plots/PartOne")
 
     while(True):
         try:
@@ -140,13 +140,13 @@ def run_pi(mazeGrid):
             
             choice = int(input("Plot action: "))
             if(choice == 1):
-                plotter.plot_optimal_policy(maze=maze)
+                plotter.plot_optimal_policy(maze=maze, save_filename="PI_policy", show_plot=False)
             elif(choice == 2):
-                plotter.plot_utility_graph(maze=maze)
+                plotter.plot_utility_graph(maze=maze, save_filename="PI_utility", show_plot=False)
             elif(choice == 3):
-                plotter.plot_utility_estimates(maze=maze)
+                plotter.plot_utility_estimates(maze=maze, save_filename="PI_utility_estimates", show_plot=False)
             elif(choice == 4):
-                plotter.plot_utility_estimates_separate(maze=maze)
+                plotter.plot_utility_estimates_separate(maze=maze, save_filename="PI_utility_estimates_by_row", show_plot=False)
             else:
                 break
         except:         # non int input string

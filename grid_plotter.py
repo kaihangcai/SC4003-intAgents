@@ -17,7 +17,7 @@ class GridPlotter:
         self.policy = policy
         self.save_path = save_path
 
-    def plot_utility_graph(self, maze, save_filename, show_plot):
+    def plot_utility_graph(self, maze, save_filename, show_plot=True):
         """
         Plots the grid world with the calculated utilities displayed on the white cells
 
@@ -32,7 +32,7 @@ class GridPlotter:
 
         self.plot_gridworld(rows=maze.height, cols=maze.width, save_filename=save_filename, show_plot=show_plot, cell_colors=cell_colors, cell_text=cell_text)
 
-    def plot_optimal_policy(self, maze, save_filename, show_plot):
+    def plot_optimal_policy(self, maze, save_filename, show_plot=True):
         """
         Plots the grid world with the optimal policies displayed on the white cells
 
