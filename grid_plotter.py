@@ -7,6 +7,11 @@ class GridPlotter:
     def __init__(self, utilities, policy, save_path="plots/PartTwo"):
         """
         Initializes the plotter with the agent object
+
+        Params:
+            utilities: The array of grid utilities calculated from either Value/Policy iteration
+            policy: The optimal policy derived by the agent
+            save_path: The path denoting the main folder to save plotted figures in
         """
         self.utilities = utilities
         self.policy = policy
@@ -15,6 +20,11 @@ class GridPlotter:
     def plot_utility_graph(self, maze, save_filename, show_plot):
         """
         Plots the grid world with the calculated utilities displayed on the white cells
+
+        Params:
+            maze: Maze object storing maze information like the 2d grid and helper functions
+            save_filename: Specific file name to use when saving the plot
+            show_plot: Bool to control whether or not to display the graph or to save it
         """
 
         cell_text = self.get_utility_dict(maze)
@@ -25,6 +35,11 @@ class GridPlotter:
     def plot_optimal_policy(self, maze, save_filename, show_plot):
         """
         Plots the grid world with the optimal policies displayed on the white cells
+
+        Params:
+            maze: Maze object storing maze information like the 2d grid and helper functions
+            save_filename: Specific file name to use when saving the plot
+            show_plot: Bool to control whether or not to display the graph or to save it
         """
 
         cell_text = self.get_utility_dict(maze)
@@ -130,6 +145,8 @@ class GridPlotter:
         Params:
             rows (int): Number of rows in the grid.
             cols (int): Number of columns in the grid.
+            save_filename: Specific file name to use when saving the plot
+            show_plot: Bool to control whether or not to display the graph or to save it
             cell_colors (dict): Dictionary mapping (row, col) tuples to color strings (e.g., {(1,1): 'green'}).
             cell_text (dict): Dictionary mapping (row, col) tuples to text strings (e.g., {(1,1): '+1'}).
             cell_actions (dict): Dictionary mapping (row, col) tuples to text strings (e.g., {(1,1): 'down'}).
@@ -178,13 +195,20 @@ class GridPlotter:
         ax.grid(True, color='black')
         ax.set_frame_on(False)
         
-        plt.savefig(f"{self.save_path}/{save_filename}")
         if(show_plot):
             plt.show()
+        else:
+            plt.savefig(f"{self.save_path}/{save_filename}")
+            plt.close()
 
     def plot_utility_estimates_separate(self, maze, save_filename="new_plot", show_plot=True):
         """
         Plots the graph of the utility for each cell over each iteration
+
+        Params:
+            maze: Maze object storing maze information like the 2d grid and helper functions
+            save_filename: Specific file name to use when saving the plot
+            show_plot: Bool to control whether or not to display the graph or to save it
         """
         iterations = len(self.utilities)
 
@@ -223,13 +247,20 @@ class GridPlotter:
             ax[y][x].set_xlabel("Number of iterations")
             ax[y][x].set_ylabel("Utility estimates")
 
-        plt.savefig(f"{self.save_path}/{save_filename}")
         if(show_plot):
             plt.show()
+        else:
+            plt.savefig(f"{self.save_path}/{save_filename}")
+            plt.close()
 
     def plot_utility_estimates(self, maze, save_filename="new_plot", show_plot=True):
         """
         Plots the graph of the utility for each cell over each iteration
+
+        Params:
+            maze: Maze object storing maze information like the 2d grid and helper functions
+            save_filename: Specific file name to use when saving the plot
+            show_plot: Bool to control whether or not to display the graph or to save it
         """
         iterations = len(self.utilities)
 
@@ -273,8 +304,42 @@ class GridPlotter:
         plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1))  # Keeps legend outside the main plot
         plt.grid(True)
 
-        plt.savefig(f"{self.save_path}/{save_filename}")
         if(show_plot):
             plt.show()
+        else:
+            plt.savefig(f"{self.save_path}/{save_filename}")
+            plt.close()
 
 
+# General plotting functions #
+def plot_data_per_trial(vi_data, pi_data, x_label="Trial", y_label="Iterations needed", title="", save_filename="new_plot", show_plot=True):
+    """
+    Plots bar graphs of the number of iterations needed to attain convergence
+
+    Params:
+        vi_data: Specific data for Value iteration to be plotted, expected to be a list with len = (trial length)
+        pi_data: Specific data for Policy iteration to be plotted, expected to be a list with len = (trial length)
+        x_label: String to be set as the x label of the graph plot, default as "Trial"
+        y_label: String to be set as the y label of the graph plot, default as "Iterations needed"
+        title: String to be set as the title of the graph plot, default as ""
+        save_filename: Specific file name to use when saving the plot
+        show_plot: Bool to control whether or not to display the graph or to save it
+    """
+    indices = np.arange(len(vi_data))
+
+    bar_width = 0.4
+
+    # plot the 2 bars side by side under the same "trial" index
+    plt.bar(indices - bar_width/2, vi_data, width=bar_width, color='skyblue', label="Value iteration")
+    plt.bar(indices + bar_width/2, pi_data, width=bar_width, color='salmon', label="Policy iteration")
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.legend()
+
+    if(show_plot):
+        plt.show()
+    else:
+        plt.savefig(f"{save_filename}")
+        plt.close()

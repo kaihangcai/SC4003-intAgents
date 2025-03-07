@@ -1,11 +1,12 @@
 import random
 import numpy as np
+import os
 
 from helper import MazeCell, Move
 from maze import Maze
 # from val_agent import ValueAgent
 from util_agent import UtilityAgent
-from grid_plotter import GridPlotter
+from grid_plotter import GridPlotter, plot_data_per_trial
 
 def get_p1_maze():
     """
@@ -185,44 +186,68 @@ def set_maze():
 
 def check_others():
     trials_per_dim = 5
-    max_steps = 1000
-    dimensions = [(8, 8), (10, 10), (12, 12), (14, 14)]
+    max_steps = 10000
+
+    dimensions = [(8, 8), (10, 10), (11, 13), (12, 12), (14, 14), (16, 16), (18, 18), (25, 25), (50, 50), (100, 100)]
 
     pi_iterations_per_dim = []
     vi_iterations_per_dim = []
 
+    pi_exectime_per_dim = []
+    vi_exectime_per_dim = []
+
+
+    folder_path = 'plots/PartTwo'
     for dim in dimensions:
+        dim_string = f"{dim[0]}x{dim[1]}"
+        os.makedirs(f"{folder_path}/{dim_string}", exist_ok=True)
+
+        print(f"Checking {dim_string}!")
         pi_iterations = []
         vi_iterations = []
+
+        pi_exectime = []
+        vi_exectime = []
+
         for i in range(trials_per_dim):
-            maze = generate_maze(dim[0], dim[1], wall_prob=0.2)
+            print(f"{dim_string}, Trial {i}")
+            maze_grid = generate_maze(dim[0], dim[1], wall_prob=0.2)
+            maze = Maze(maze_grid)
 
             # Value iteration
             vi_agent = UtilityAgent(maze=maze)
-            vi_utilities, vi_policy = vi_agent.value_iteration(max_steps=max_steps)
+            vi_utilities, vi_policy, vi_time = vi_agent.value_iteration(max_steps=max_steps)
             vi_iterations.append(len(vi_utilities))
+            vi_exectime.append(vi_time)
 
-            vi_plotter = GridPlotter(utilities=vi_utilities, policy=vi_policy, save_path=f"plots/PartTwo/{dim[0]}x{dim[1]}")
-
-            vi_plotter.plot_optimal_policy(maze, save_filename=f"{dim[0]}_{dim[1]}_VI_policy_{i}", show_plot=False)
-            vi_plotter.plot_utility_graph(maze, save_filename=f"{dim[0]}_{dim[1]}_VI_utility_{i}", show_plot=False)
+            vi_plotter = GridPlotter(utilities=vi_utilities, policy=vi_policy, save_path=f"plots/PartTwo/{dim_string}")
+            vi_plotter.plot_optimal_policy(maze, save_filename=f"{dim_string}_VI_policy_{i}", show_plot=False)
+            vi_plotter.plot_utility_graph(maze, save_filename=f"{dim_string}_VI_utility_{i}", show_plot=False)
 
             # Policy iteration
             pi_agent = UtilityAgent(maze=maze)
-            pi_utilities, pi_policy = pi_agent.policy_iteration(max_steps=max_steps)
+            pi_utilities, pi_policy, pi_time = pi_agent.policy_iteration(max_steps=max_steps)
             pi_iterations.append(len(pi_utilities))
+            pi_exectime.append(pi_time)
 
-            pi_plotter = GridPlotter(utilities=pi_utilities, policy=pi_policy, save_path=f"plots/PartTwo/{dim[0]}x{dim[1]}")
+            pi_plotter = GridPlotter(utilities=pi_utilities, policy=pi_policy, save_path=f"plots/PartTwo/{dim_string}")
 
-            pi_plotter.plot_optimal_policy(maze, save_filename=f"{dim[0]}_{dim[1]}_PI_policy_{i}", show_plot=False)
-            pi_plotter.plot_utility_graph(maze, save_filename=f"{dim[0]}_{dim[1]}_PI_utility_{i}", show_plot=False)
+            pi_plotter.plot_optimal_policy(maze, save_filename=f"{dim_string}_PI_policy_{i}", show_plot=False)
+            pi_plotter.plot_utility_graph(maze, save_filename=f"{dim_string}_PI_utility_{i}", show_plot=False)
 
         pi_iterations_per_dim.append(pi_iterations)
         vi_iterations_per_dim.append(vi_iterations)
-    
-    print(pi_iterations_per_dim)
-    print(vi_iterations_per_dim)
-    # plotter = GridPlotter()
+
+        pi_exectime_per_dim.append(pi_exectime)
+        vi_exectime_per_dim.append(vi_exectime)
+
+    # print(pi_iterations_per_dim)
+    # print(vi_iterations_per_dim)
+    for i in range(len(dimensions)):
+        dim_string = f"{dimensions[i][0]}x{dimensions[i][1]}"
+        plot_data_per_trial(vi_data=vi_iterations_per_dim[i], pi_data=pi_iterations_per_dim[i], title=f"Iterations for Value & Policy iteration in {dim_string}", save_filename=f"plots/PartTwo/{dim_string}/{dim_string}_iterations", show_plot=False)
+        
+        plot_data_per_trial(vi_data=vi_exectime_per_dim[i], pi_data=pi_exectime_per_dim[i], y_label="Time taken", title=f"Exec time for Value & Policy iteration in {dim_string}", save_filename=f"plots/PartTwo/{dim_string}/{dim_string}_exec_time", show_plot=False)
 
 
 

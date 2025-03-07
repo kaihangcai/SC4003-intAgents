@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from helper import Move
 
@@ -81,9 +82,11 @@ class UtilityAgent:
         Returns:
             utilities: ndarray of utility values calculated over each iteration (last entry would just be the final utility values)
             policy: the resulting optimal policies for each grid cell
+            exec_time: time taken to execute the iteration function
         """
         utilities = []
         iteration = 0
+        start_time = time.time()
         while(True):
             utilities.append(np.copy(self.u_table))
             self.u_table = self.u_prime_table.copy()    # assign u_table as a copy of u_prime_table
@@ -126,8 +129,9 @@ class UtilityAgent:
                 break
         
         utilities = np.stack(utilities, axis=0)
+        exec_time = time.time() - start_time    # time taken for execution
 
-        return utilities, self.policy
+        return utilities, self.policy, exec_time
 
     def value_iteration(self, max_steps=1):
         """
@@ -140,9 +144,11 @@ class UtilityAgent:
         Returns:
             utilities: ndarray of utility values calculated over each iteration (last entry would just be the final utility values)
             policy: the resulting optimal policies for each grid cell
+            exec_time: time taken to execute the iteration function
         """
         utilities = []
         iteration = 0
+        start_time = time.time()
         while(True):
             delta = 0   # to track the max difference in updated values
             utilities.append(np.copy(self.u_prime_table))
@@ -175,8 +181,9 @@ class UtilityAgent:
 
         # calculate actual policy using new utilities
         self.calculate_policy()
+        exec_time = time.time() - start_time
 
-        return utilities, self.policy
+        return utilities, self.policy, exec_time
 
     def get_max_expected_utility(self, state):
         """
